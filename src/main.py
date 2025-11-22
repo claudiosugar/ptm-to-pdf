@@ -29,8 +29,9 @@ def retrieve_informe_as_pdf(ref_catastral: str) -> bytes:
     url = f"https://api.conselldemallorca.net/sit-api/parcelas/{ref_catastral}/informeHTML"
     
     try:
-        # Download the HTML content
-        with urllib.request.urlopen(url) as response:
+        # Download the HTML content with timeout
+        request = urllib.request.Request(url)
+        with urllib.request.urlopen(request, timeout=60) as response:
             html_content = response.read().decode('utf-8')
         
         # Create a temporary file for the HTML content
@@ -43,7 +44,14 @@ def retrieve_informe_as_pdf(ref_catastral: str) -> bytes:
             temp_pdf_path = temp_pdf.name
         
         # Convert HTML to PDF using wkhtmltopdf
-        subprocess.run([WKHTMLTOPDF_PATH, temp_html_path, temp_pdf_path], check=True)
+        # Add timeout and better error handling
+        subprocess.run(
+            [WKHTMLTOPDF_PATH, temp_html_path, temp_pdf_path],
+            check=True,
+            timeout=300,  # 5 minute timeout for PDF conversion
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         
         # Convert PDF to bytes using PyMuPDF
         pdf_document = fitz.open(temp_pdf_path)
@@ -58,6 +66,9 @@ def retrieve_informe_as_pdf(ref_catastral: str) -> bytes:
         
     except urllib.error.URLError as e:
         print(f"Error downloading the report: {e}")
+        return None
+    except subprocess.TimeoutExpired:
+        print(f"PDF conversion timed out: {e}")
         return None
     except subprocess.CalledProcessError as e:
         print(f"Error converting to PDF: {e}")
