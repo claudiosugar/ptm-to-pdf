@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: ptm-to-pdf
+    plan: free
+    dockerfilePath: ./Dockerfile
+    # dockerCommand is optional - Dockerfile CMD will be used
+

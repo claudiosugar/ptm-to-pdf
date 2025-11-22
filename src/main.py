@@ -9,8 +9,11 @@ from io import BytesIO
 
 app = Flask(__name__)
 
-# Configure wkhtmltopdf path
-WKHTMLTOPDF_PATH = "/usr/bin/wkhtmltopdf"  # Updated path for Linux
+# Configure wkhtmltopdf path - try common locations
+import shutil
+WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf") or "/usr/local/bin/wkhtmltopdf"
+if not os.path.exists(WKHTMLTOPDF_PATH):
+    WKHTMLTOPDF_PATH = "/usr/bin/wkhtmltopdf"
 
 def retrieve_informe_as_pdf(ref_catastral: str) -> bytes:
     """
